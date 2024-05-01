@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Alter_Ego {
+  AName           String            @id @db.VarChar(80)
+  Citizenship     String?           @db.VarChar(80)
+  Gender          String?           @db.VarChar(80)
+  Occupation      String?           @db.VarChar(80)
+  DOB             String?           @db.VarChar(80)
+  Physical_Traits Physical_Traits[]
+  SPChangesTo     SPChangesTo[]
+}
+
+model Cgains {
+  FK_Cname String @db.VarChar(80)
+  FK_Pname String @db.VarChar(90)
+  NPC      NPC    @relation(fields: [FK_Cname], references: [CName], onDelete: NoAction, onUpdate: NoAction, map: "cgains_ibfk_1")
+  Powers   Powers @relation(fields: [FK_Pname], references: [Pname], onDelete: NoAction, onUpdate: NoAction, map: "cgains_ibfk_2")
+
+  @@id([FK_Cname, FK_Pname])
+  @@index([FK_Pname], map: "FK_Pname")
+}
+
+model Loved_One {
+  Cname    String  @id @db.VarChar(80)
+  Relation String? @db.VarChar(80)
+  NPC      NPC     @relation(fields: [Cname], references: [CName], onDelete: NoAction, onUpdate: NoAction, map: "loved_one_ibfk_1")
+}
+
+model NPC {
+  CName           String            @id @db.VarChar(80)
+  Gender          String?           @db.VarChar(80)
+  Living_Status   Bytes?            @db.Bit(8)
+  FK_Salias       String?           @db.VarChar(80)
+  Cgains          Cgains[]
+  Loved_One       Loved_One?
+  Spider_People   Spider_People?    @relation(fields: [FK_Salias], references: [Alias], onDelete: NoAction, onUpdate: NoAction, map: "npc_ibfk_1")
+  Physical_Traits Physical_Traits[]
+  Powers          Powers[]
+  Villain         Villain?
+
+  @@index([FK_Salias], map: "FK_Salias")
+}
+
+model Physical_Traits {
+  FK_Cname                                                                        String                       @unique @db.VarChar(80)
+  FK_Aname                                                                        String                       @unique @db.VarChar(80)
+  Eye_Color                                                                       String?                      @db.VarChar(20)
+  Height                                                                          Float?                       @db.Float
+  NPC                                                                             NPC                          @relation(fields: [FK_Cname], references: [CName], onDelete: NoAction, onUpdate: NoAction, map: "physical_traits_ibfk_1")
+  Alter_Ego                                                                       Alter_Ego                    @relation(fields: [FK_Aname], references: [AName], onDelete: NoAction, onUpdate: NoAction, map: "physical_traits_ibfk_2")
+  Unusual_Character_Features_Unusual_Character_Features_FK_CnameToPhysical_Traits Unusual_Character_Features[] @relation("Unusual_Character_Features_FK_CnameToPhysical_Traits")
+  Unusual_Character_Features_Unusual_Character_Features_FK_AnameToPhysical_Traits Unusual_Character_Features[] @relation("Unusual_Character_Features_FK_AnameToPhysical_Traits")
+
+  @@id([FK_Cname, FK_Aname])
+  @@index([FK_Aname], map: "FK_Aname")
+}
+
+model Powers {
+  id            Int            @id
+  FK_Cname      String?        @db.VarChar(80)
+  FK_Salias     String?        @db.VarChar(80)
+  Pname         String?        @unique @db.VarChar(80)
+  Origin        String?        @db.VarChar(80)
+  PType         String?        @db.VarChar(1000)
+  Cgains        Cgains[]
+  Spider_People Spider_People? @relation(fields: [FK_Salias], references: [Alias], onDelete: NoAction, onUpdate: NoAction, map: "powers_ibfk_1")
+  NPC           NPC?           @relation(fields: [FK_Cname], references: [CName], onDelete: NoAction, onUpdate: NoAction, map: "powers_ibfk_2")
+  SPgains       SPgains[]
+
+  @@index([FK_Cname], map: "FK_Cname")
+  @@index([FK_Salias], map: "FK_Salias")
+  @@index([Pname], map: "Pname")
+}
+
+model SPChangesTo {
+  FK_alter_ego_name String        @db.VarChar(80)
+  FK_spider_alias   String        @db.VarChar(80)
+  Alter_Ego         Alter_Ego     @relation(fields: [FK_alter_ego_name], references: [AName], onDelete: NoAction, onUpdate: NoAction, map: "spchangesto_ibfk_1")
+  Spider_People     Spider_People @relation(fields: [FK_spider_alias], references: [Alias], onDelete: NoAction, onUpdate: NoAction, map: "spchangesto_ibfk_2")
+
+  @@id([FK_alter_ego_name, FK_spider_alias])
+  @@index([FK_spider_alias], map: "FK_spider_alias")
+}
+
+model SPgains {
+  FK_spider_alias String        @db.VarChar(80)
+  FK_power_name   String        @db.VarChar(90)
+  Spider_People   Spider_People @relation(fields: [FK_spider_alias], references: [Alias], onDelete: NoAction, onUpdate: NoAction, map: "spgains_ibfk_1")
+  Powers          Powers        @relation(fields: [FK_power_name], references: [Pname], onDelete: NoAction, onUpdate: NoAction, map: "spgains_ibfk_2")
+
+  @@id([FK_spider_alias, FK_power_name])
+  @@index([FK_power_name], map: "FK_power_name")
+}
+
+model Spider_People {
+  Alias           String        @id @db.VarChar(80)
+  Affiliation     String?       @db.VarChar(80)
+  Main_Weapon     String?       @db.VarChar(40)
+  SPLiving_Status String?       @db.VarChar(10)
+  FK_Uname        String?       @db.VarChar(80)
+  NPC             NPC[]
+  Powers          Powers[]
+  SPChangesTo     SPChangesTo[]
+  SPgains         SPgains[]
+  Universe        Universe?     @relation(fields: [FK_Uname], references: [UName], onDelete: NoAction, onUpdate: NoAction, map: "spider_people_ibfk_1")
+
+  @@index([FK_Uname], map: "FK_Uname")
+}
+
+model Universe {
+  UName              String          @id @db.VarChar(80)
+  Base_Of_Operations String?         @db.VarChar(80)
+  Spider_People      Spider_People[]
+}
+
+model Unusual_Character_Features {
+  FK_Cname                                                             String          @db.VarChar(80)
+  FK_Aname                                                             String          @db.VarChar(80)
+  Cfeatures                                                            String          @db.VarChar(80)
+  Physical_Traits_Unusual_Character_Features_FK_CnameToPhysical_Traits Physical_Traits @relation("Unusual_Character_Features_FK_CnameToPhysical_Traits", fields: [FK_Cname], references: [FK_Cname], onDelete: NoAction, onUpdate: NoAction, map: "unusual_character_features_ibfk_1")
+  Physical_Traits_Unusual_Character_Features_FK_AnameToPhysical_Traits Physical_Traits @relation("Unusual_Character_Features_FK_AnameToPhysical_Traits", fields: [FK_Aname], references: [FK_Aname], onDelete: NoAction, onUpdate: NoAction, map: "unusual_character_features_ibfk_2")
+
+  @@id([FK_Cname, FK_Aname, Cfeatures])
+  @@index([FK_Aname], map: "FK_Aname")
+}
+
+model Unusual_Villain_Features {
+  FK_Cname  String  @db.VarChar(80)
+  Vfeatures String  @db.VarChar(80)
+  Villain   Villain @relation(fields: [FK_Cname], references: [Cname], onDelete: NoAction, onUpdate: NoAction, map: "unusual_villain_features_ibfk_1")
+
+  @@id([FK_Cname, Vfeatures])
+}
+
+model Villain {
+  Cname                    String                     @id @db.VarChar(80)
+  Origin                   String?                    @db.VarChar(80)
+  Main_Weapon              String?                    @db.VarChar(80)
+  Unusual_Villain_Features Unusual_Villain_Features[]
+  NPC                      NPC                        @relation(fields: [Cname], references: [CName], onDelete: NoAction, onUpdate: NoAction, map: "villain_ibfk_1")
+}
